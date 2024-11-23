@@ -1,28 +1,17 @@
-ARG COMMIT_SHA=""
+# 使用 Node.js 基础镜像  
+FROM node:alpine  
 
-FROM --platform=$BUILDPLATFORM node:alpine AS builder
-WORKDIR /app
+# 创建工作目录  
+WORKDIR /app  
 
-RUN npm i -g pnpm
-COPY pnpm-lock.yaml package.json ./
-COPY ./patches/ ./patches/
-RUN pnpm i
+# 复制静态文件到容器中  
+COPY . .  
 
-COPY . .
-RUN pnpm build \
-  # remove source maps - people like small image
-  && rm public/*.map || true
+# 安装 http-server  
+RUN npm install -g http-server  
 
-FROM --platform=$TARGETPLATFORM alpine
-# the brotli module is only in the alpine *edge* repo
-# https://pkgs.alpinelinux.org/package/edge/main/x86/nginx-mod-http-brotli
-RUN apk add \
-  nginx \
-  nginx-mod-http-brotli \
-  --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
-COPY docker/nginx-default.conf /etc/nginx/http.d/default.conf
-RUN rm -rf /usr/share/nginx/html/*
-COPY --from=builder /app/public /usr/share/nginx/html
-ENV YACD_DEFAULT_BACKEND "http://127.0.0.1:9090"
-ADD docker-entrypoint.sh /
-CMD ["/docker-entrypoint.sh"]
+# 暴露 HTTP 端口  
+EXPOSE 80  
+
+# 启动 http-server  
+CMD ["http-server", "-p", "8080", "-o"]
