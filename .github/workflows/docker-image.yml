@@ -1,9 +1,9 @@
 name: Build and Push Docker Image  
-
 on:  
   push:  
     branches:  
-      - main  
+      - no-Nginx  # 当推送到 no-Nginx 分支时触发工作流  
+  workflow_dispatch:  # 允许手动触发  
 
 jobs:  
   build:  
